@@ -3,7 +3,11 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.config import settings
 
-engine = create_engine(settings.database_url)
+engine_options = {}
+if settings.database_url.startswith("sqlite"):
+    engine_options["connect_args"] = {"check_same_thread": False}
+
+engine = create_engine(settings.database_url, **engine_options)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

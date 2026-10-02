@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vet CRM</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px system-ui, sans-serif; color: #20302d; background: #f3f7f5; }
+    header, nav { display: flex; align-items: center; gap: 10px; padding: 14px 22px; background: #fff; border-bottom: 1px solid #dce7e1; }
+    header { justify-content: space-between; } .brand { font-weight: 700; color: #18734d; }
+    nav { flex-wrap: wrap; } nav button { padding: 8px 13px; border: 1px solid #cbd9d2; border-radius: 7px; background: #fff; cursor: pointer; }
+    nav button.active, button.primary { color: #fff; background: #18734d; border-color: #18734d; }
+    nav button:disabled { opacity: .45; cursor: not-allowed; } nav .logout { margin-left: auto; }
+    main { width: min(760px, 100%); margin: 25px auto; padding: 0 20px; }
+    .card { margin-bottom: 16px; padding: 22px; background: #fff; border: 1px solid #dce7e1; border-radius: 10px; }
+    h2 { margin-top: 0; } label { display: block; margin-top: 12px; font-size: 14px; color: #52655d; }
+    input { width: 100%; margin-top: 5px; padding: 10px; border: 1px solid #cbd9d2; border-radius: 6px; font-size: 15px; }
+    button.primary { margin-top: 16px; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
+    .msg { margin-top: 12px; padding: 10px; border-radius: 6px; font-size: 14px; }
+    .ok { color: #155b3c; background: #e8f6ed; } .err { color: #8b2929; background: #fbeaea; }
+    table { width: 100%; margin-top: 16px; border-collapse: collapse; } th, td { padding: 9px; text-align: left; border-bottom: 1px solid #e5ece8; }
+    .hint, .empty { color: #708078; font-size: 14px; }
+  </style>
+</head>
+<body>
+<header><div class="brand">Vet CRM — ветеринарна клініка</div><div id="who">не авторизовано</div></header>
+<nav>
+  <button data-view="auth" class="active" onclick="showView('auth')">Вхід / реєстрація</button>
+  <button data-view="home" disabled onclick="showView('home')">Моя сторінка</button>
+  <button data-view="pets" disabled onclick="showView('pets')">Пацієнти</button>
+  <button data-view="clinic" disabled onclick="showView('clinic')">Прийоми та історія</button>
+  <button data-view="admin" disabled onclick="showView('admin')">Адмін-панель</button>
+  <button data-view="idor" disabled onclick="showView('idor')">Перевірка IDOR</button>
+  <button class="logout" onclick="logout()">Вийти</button>
+</nav>
+<main>
+  <section id="view-auth">
+    <div class="card"><h2>Створити акаунт</h2><label>Email</label><input id="reg-email" type="email" autocomplete="email"><label>Пароль</label><input id="reg-password" type="password" autocomplete="new-password"><button class="primary" onclick="register()">Зареєструватися</button><div id="reg-msg"></div></div>
+    <div class="card"><h2>Увійти</h2><label>Email</label><input id="login-email" type="email" autocomplete="email"><label>Пароль</label><input id="login-password" type="password" autocomplete="current-password"><button class="primary" onclick="login()">Увійти</button><div id="login-msg"></div></div>
+    <div class="card"><h2>Вхід адміністратора</h2><p class="hint">Демо-акаунт: admin@example.com / Admin12345</p><label>Email адміністратора</label><input id="admin-email" type="email" value="admin@example.com" autocomplete="username"><label>Пароль</label><input id="admin-password" type="password" value="Admin12345" autocomplete="current-password"><button class="primary" onclick="adminLogin()">Увійти як адміністратор</button><div id="admin-login-msg"></div></div>
+  </section>
+  <section id="view-home" hidden><div class="card"><h2>Моя сторінка</h2><p>Ви успішно увійшли до системи.</p><button class="primary" onclick="callAndShow('/user/home','home-msg')">Оновити дані</button><div id="home-msg"></div></div><div class="card"><h2>Перевірка ролі</h2><p class="hint">Звичайний користувач має отримати 403 при доступі до адмінки.</p><button class="primary" onclick="callAndShow('/admin/home','role-msg')">Відкрити адмінку</button><div id="role-msg"></div></div></section>
+  <section id="view-pets" hidden><div class="card"><h2>Додати пацієнта</h2><label>Кличка</label><input id="pet-name"><label>Вид тварини</label><input id="pet-species"><button class="primary" onclick="createPet()">Додати пацієнта</button><div id="pet-msg"></div></div><div class="card"><h2>Мої пацієнти</h2><button class="primary" onclick="loadPets()">Оновити</button><table><thead><tr><th>ID</th><th>Кличка</th><th>Вид</th></tr></thead><tbody id="pets-body"></tbody></table></div></section>
+  <section id="view-clinic" hidden><div class="card"><h2>Запис на прийом</h2><label>ID пацієнта</label><input id="appointment-pet-id" type="number"><label>Дата і час</label><input id="appointment-date" type="datetime-local"><label>Причина звернення</label><input id="appointment-reason" placeholder="Плановий огляд"><button class="primary" onclick="createAppointment()">Записати</button><div id="appointment-msg"></div></div><div class="card"><h2>Історія хвороб</h2><label>ID пацієнта</label><input id="history-pet-id" type="number"><button class="primary" onclick="loadHistory()">Показати історію</button><div id="history-msg"></div><table><thead><tr><th>Дата</th><th>Діагноз</th><th>Лікування</th></tr></thead><tbody id="history-body"></tbody></table></div></section>
+  <section id="view-admin" hidden><div class="card"><h2>Користувачі</h2><button class="primary" onclick="loadUsers()">Завантажити</button><table><thead><tr><th>ID</th><th>Email</th><th>Роль</th></tr></thead><tbody id="users-body"></tbody></table><div id="admin-msg"></div></div></section>
+  <section id="view-idor" hidden><div class="card"><h2>Перевірка горизонтальних прав</h2><p class="hint">Введіть ID чужого улюбленця. Очікується 403 Forbidden.</p><input id="idor-id" type="number" min="1"><button class="primary" onclick="tryIdor()">Перевірити</button><div id="idor-msg"></div></div></section>
+</main>
+<script>
+const API = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+let token = null, email = null;
+function showView(name) { document.querySelectorAll("main section").forEach(s => s.hidden = true); document.getElementById("view-" + name).hidden = false; document.querySelectorAll("nav [data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === name)); }
+function message(id, status, data) { const el = document.getElementById(id), ok = status >= 200 && status < 300; el.className = "msg " + (ok ? "ok" : "err"); el.textContent = (ok ? "Готово" : "Помилка") + " (" + status + "): " + (data.detail || data.message || "Операцію виконано."); }
+function updateNav() { document.querySelectorAll("nav [data-view]").forEach(b => { if (b.dataset.view !== "auth") b.disabled = !token; }); document.getElementById("who").textContent = email || "не авторизовано"; }
+function connectionError(id) { message(id, 0, {detail:"Не вдалося підключитися до сервера. Запустіть FastAPI на http://127.0.0.1:8000."}); }
+async function register() { const e = document.getElementById("reg-email").value.trim(), p = document.getElementById("reg-password").value; if (!e || !p) return message("reg-msg", 400, {detail:"Заповніть усі поля."}); try { const r = await fetch(API + "/auth/register", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:e,password:p})}); message("reg-msg", r.status, await r.json()); } catch { connectionError("reg-msg"); } }
+async function login() { const e = document.getElementById("login-email").value.trim(), p = document.getElementById("login-password").value; if (!e || !p) return message("login-msg", 400, {detail:"Заповніть усі поля."}); try { const form = new URLSearchParams({username:e,password:p}); const r = await fetch(API + "/auth/login", {method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:form}); const data = await r.json(); message("login-msg", r.status, data); if (r.ok) { token = data.access_token; email = e; updateNav(); showView("home"); } } catch { connectionError("login-msg"); } }
+async function adminLogin() { const e = document.getElementById("admin-email").value.trim(), p = document.getElementById("admin-password").value; if (!e || !p) return message("admin-login-msg", 400, {detail:"Заповніть усі поля."}); try { const form = new URLSearchParams({username:e,password:p}); const r = await fetch(API + "/auth/admin-login", {method:"POST", headers:{"Content-Type":"application/x-www-form-urlencoded"}, body:form}); const data = await r.json(); message("admin-login-msg", r.status, data); if (r.ok) { token = data.access_token; email = e; updateNav(); showView("admin"); } } catch { connectionError("admin-login-msg"); } }
+function logout() { token = email = null; updateNav(); showView("auth"); }
+async function api(method, path, body) { const headers = token ? {Authorization:"Bearer " + token} : {}; if (body) headers["Content-Type"] = "application/json"; const r = await fetch(API + path, {method, headers, body:body ? JSON.stringify(body) : undefined}); return {status:r.status, data:await r.json()}; }
+async function callAndShow(path, id) { const r = await api("GET", path); message(id, r.status, r.data); }
+async function createPet() { const r = await api("POST", "/pets/", {name:document.getElementById("pet-name").value, species:document.getElementById("pet-species").value}); message("pet-msg", r.status, r.data); if (r.status === 200) loadPets(); }
+async function createAppointment() { const r = await api("POST", "/clinic/appointments", {pet_id:Number(document.getElementById("appointment-pet-id").value), scheduled_at:document.getElementById("appointment-date").value, reason:document.getElementById("appointment-reason").value}); message("appointment-msg", r.status, r.data); }
+async function loadHistory() { const id = document.getElementById("history-pet-id").value, r = await api("GET", "/clinic/medical-records/" + id), body = document.getElementById("history-body"); if (r.status !== 200) return message("history-msg", r.status, r.data); body.innerHTML = r.data.length ? r.data.map(x => `<tr><td>${x.visit_date}</td><td>${x.diagnosis}</td><td>${x.treatment}</td></tr>`).join("") : '<tr><td colspan="3" class="empty">Історія ще порожня.</td></tr>'; }
+async function loadPets() { const r = await api("GET", "/pets/"), body = document.getElementById("pets-body"); body.innerHTML = r.status === 200 && r.data.length ? r.data.map(p => `<tr><td>${p.id}</td><td>${p.name}</td><td>${p.species || ""}</td></tr>`).join("") : '<tr><td colspan="3" class="empty">Улюбленців ще немає.</td></tr>'; }
+async function loadUsers() { const r = await api("GET", "/admin/users"), body = document.getElementById("users-body"); if (r.status !== 200) return message("admin-msg", r.status, r.data); body.innerHTML = r.data.map(u => `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.role}</td></tr>`).join(""); }
+async function tryIdor() { const id = document.getElementById("idor-id").value; if (!id) return message("idor-msg", 400, {detail:"Введіть ID."}); const r = await api("GET", "/pets/" + id); message("idor-msg", r.status, r.data); }
+updateNav();
+</script>
+</body>
+</html>

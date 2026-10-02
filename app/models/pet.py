@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Date, Integer, String
+from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
 from app.db.session import Base
 
@@ -11,4 +12,6 @@ class Pet(Base):
     species = Column(String, nullable=True)
     breed = Column(String, nullable=True)
     birth_date = Column(Date, nullable=True)
-    owner_name = Column(String, nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    owner = relationship("User", back_populates="pets")
