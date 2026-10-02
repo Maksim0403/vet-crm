@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class AppointmentCreate(BaseModel):
@@ -13,8 +13,7 @@ class AppointmentOut(AppointmentCreate):
     id: int
     status: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MedicalRecordCreate(BaseModel):
@@ -27,5 +26,4 @@ class MedicalRecordCreate(BaseModel):
 class MedicalRecordOut(MedicalRecordCreate):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
