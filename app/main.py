@@ -1,10 +1,11 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from app.api import admin, auth, clinic, home, pets
+from app.core.config import settings
 from app.db.bootstrap import ensure_admin
 from app.db.migrations import upgrade_pet_owner_column
 from app.db.session import Base, SessionLocal, engine
@@ -15,7 +16,7 @@ upgrade_pet_owner_column(engine)
 with SessionLocal() as db:
     ensure_admin(db)
 
-app = FastAPI()
+app = FastAPI(debug=settings.debug)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,3 +39,18 @@ def frontend():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    if settings.debug:
+        raise exc
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
+@app.get("/test-error")
+def test_error():
+    raise ValueError("Тестова помилка для перевірки обробки 500")
