@@ -1,18 +1,15 @@
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.core.security import hash_password
 from app.models.user import User, UserRole
 
 
-def ensure_admin(db: Session) -> None:
-    admin = db.query(User).filter(User.email == settings.admin_email).first()
+def create_admin(db: Session, email: str, password: str) -> None:
+    admin = db.query(User).filter(User.email == email).first()
     if admin is None:
-        db.add(
-            User(
-                email=settings.admin_email,
-                hashed_password=hash_password(settings.admin_password),
-                role=UserRole.admin,
-            )
-        )
-        db.commit()
+        admin = User(email=email, hashed_password=hash_password(password), role=UserRole.admin)
+        db.add(admin)
+    else:
+        admin.hashed_password = hash_password(password)
+        admin.role = UserRole.admin
+    db.commit()

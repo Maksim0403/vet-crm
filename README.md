@@ -37,24 +37,36 @@ pip install -r requirements.txt
 
 ### Sandbox (тестове середовище)
 
-1. Створіть БД `vet_crm_sandbox`
-2. Скопіюйте `.env.example` → `.env.sandbox`, заповніть своїми даними
-3. Запустіть:
+1. Створіть окрему PostgreSQL БД `vet_crm_sandbox`.
+2. Скопіюйте шаблон і заповніть локальні налаштування:
    ```powershell
-   uvicorn app.main:app --reload
+   Copy-Item .env.example .env.sandbox
+   ```
+   У `.env.sandbox` задайте `DATABASE_URL`, унікальний `SECRET_KEY`, `DEBUG=True` та `ENVIRONMENT=sandbox`.
+3. Запустіть застосунок (без `APP_ENV` використовується `.env.sandbox`):
+   ```powershell
+   .\.venv\Scripts\uvicorn.exe app.main:app --reload
    ```
 
 ### Production (робоче середовище)
 
-1. Створіть БД `vet_crm_production`
-2. Скопіюйте `.env.example` → `.env.production`, заповніть реальними production-даними (сильний `SECRET_KEY`, `DEBUG=False`)
+1. Створіть окрему PostgreSQL БД `vet_crm_production`. Не використовуйте sandbox database URL.
+2. Створіть `.env.production` на основі шаблону та налаштуйте production credentials. Використовуйте довгий випадковий `SECRET_KEY`, `DEBUG=False` і `ENVIRONMENT=production`.
 3. Запустіть:
    ```powershell
    $env:APP_ENV="production"
-   uvicorn app.main:app
+   .\.venv\Scripts\uvicorn.exe app.main:app
    ```
 
-За замовчуванням (`APP_ENV` не задано) застосунок працює в режимі `sandbox`.
+Щоб створити адміністратора, виконайте команду в тому ж середовищі, що й застосунок:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.seed_admin admin@example.com "Use-a-unique-password"
+```
+
+Для production спочатку встановіть `$env:APP_ENV="production"` у цьому терміналі. Команда створить адміністратора або оновить роль і пароль користувача з таким email.
+
+Файли `.env.sandbox` і `.env.production` містять локальні секрети, ігноруються Git та не повинні додаватися до репозиторію. `.env.example` містить лише прикладові значення.
 
 ## Swagger / API docs
 

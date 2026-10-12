@@ -1,8 +1,7 @@
 import sys
 
-from app.core.security import hash_password
+from app.db.bootstrap import create_admin
 from app.db.session import Base, SessionLocal, engine
-from app.models.user import User, UserRole
 
 
 def main() -> None:
@@ -13,14 +12,7 @@ def main() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        user = db.query(User).filter(User.email == email).first()
-        if user is None:
-            user = User(email=email, hashed_password=hash_password(password), role=UserRole.admin)
-            db.add(user)
-        else:
-            user.hashed_password = hash_password(password)
-            user.role = UserRole.admin
-        db.commit()
+        create_admin(db, email, password)
     finally:
         db.close()
 
